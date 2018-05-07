@@ -1,0 +1,2 @@
+Para poder dibujar la solucion la estrategia (por el momento) es generar el sujeto de prueba para cada algoritmo, y mover cada uno de ellos una casilla a la vez y dibujar el avance cada ciclo de la solucion. Esta aproximacion se da por el hecho del posible retraso que genera la solucion de raton aleatorio.
+otra aproximacion es el uso de hilos para generar la solucion y posteriormente realizar la animacion de la solucion.
