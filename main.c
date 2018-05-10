@@ -51,6 +51,7 @@ void guardar_maze(char* archivo);
 
 void setij();
 int random_mouse(int m,int n, int ar[][n]);
+void run();
 
 
 int main(int argc, char *argv[])
@@ -63,8 +64,10 @@ int main(int argc, char *argv[])
     guardar_maze("pr1.txt");*/
 
     abrir_maze("pr1.txt");
-    desplegar();
+    //desplegar();
     setij();
+    run();
+    desplegar();
     return 0;
 }
 
@@ -302,8 +305,10 @@ void desplegar(){
             printf("\n");
         if(ArPant[i]==0)
             printf("XX");
-        else
+        else if(ArPant[i]==1)
             printf("  ");
+        else
+            printf("<>");
     }
 }
 
@@ -361,46 +366,57 @@ void setij(){
     }
     raton.dir=mano_izq.dir=mano_der.dir=pledge.dir=dir;
     raton.sum_ang=mano_izq.sum_ang=mano_der.sum_ang=pledge.sum_ang=0;
+    raton.fordw=2;
+    raton.rev=256;
+    mano_izq.fordw=4;
+    mano_izq.rev=128;
+    mano_der.fordw=8;
+    mano_der.rev=64;
+    pledge.fordw=16;
+    pledge.rev=32;
+    raton.retread=mano_izq.retread=mano_der.retread=pledge.retread=0;
+    raton.i=mano_izq.i=mano_der.i=pledge.i=ini_i;
+    raton.j=mano_izq.j=mano_der.j=pledge.j=ini_j;
 }
 
-int dir_avanc(struct subject s,int m,int n, int ar[][n]){
+int dir_avanc(struct subject *s,int m,int n, int ar[][n]){
     int resp=0;
-    if(ar[s.i][s.j+1]!=0)
+    if(ar[s->i][s->j+1]!=0)
         resp=1;
-    if(ar[s.i+1][s.j]!=0)
+    if(ar[s->i+1][s->j]!=0)
         resp+=2;
-    if(ar[s.i][s.j-1]!=0)
-        resp=4;
-    if(ar[s.i-1][s.j]!=0)
+    if(ar[s->i][s->j-1]!=0)
+        resp+=4;
+    if(ar[s->i-1][s->j]!=0)
         resp+=8;
-    if ((s.dir&8)&&(resp&2))
+    if ((s->dir&8)&&(resp&2))
         resp-=2;
-    else if ((s.dir&2)&&(resp&8))
+    else if ((s->dir&2)&&(resp&8))
         resp-=8;
-    else if ((s.dir&1)&&(resp&4))
+    else if ((s->dir&1)&&(resp&4))
         resp-=4;
-    else if ((s.dir&4)&&(resp&1))
+    else if ((s->dir&4)&&(resp&1))
         resp-=1;
     return resp;
 }
 
-int dir_avanc_trem(struct subject s,int m,int n, int ar[][n]){
+int dir_avanc_trem(struct subject *s,int m,int n, int ar[][n]){
     int resp=0;
-    if(ar[s.i][s.j+1]!=0&&!(s.rev&ar[s.i][s.j+1]))
+    if(ar[s->i][s->j+1]!=0&&!(s->rev&ar[s->i][s->j+1]))
         resp=1;
-    if(ar[s.i+1][s.j]!=0&&!(s.rev&ar[s.i+1][s.j]))
+    if(ar[s->i+1][s->j]!=0&&!(s->rev&ar[s->i+1][s->j]))
         resp+=2;
-    if(ar[s.i][s.j-1]!=0&&!(s.rev&ar[s.i][s.j-1]))
+    if(ar[s->i][s->j-1]!=0&&!(s->rev&ar[s->i][s->j-1]))
         resp=4;
-    if(ar[s.i-1][s.j]!=0&&!(s.rev&ar[s.i-1][s.j]))
+    if(ar[s->i-1][s->j]!=0&&!(s->rev&ar[s->i-1][s->j]))
         resp+=8;
-    if ((s.dir&8)&&(resp&2))
+    if ((s->dir&8)&&(resp&2))
         resp-=2;
-    else if ((s.dir&2)&&(resp&8))
+    else if ((s->dir&2)&&(resp&8))
         resp-=8;
-    else if ((s.dir&1)&&(resp&4))
+    else if ((s->dir&1)&&(resp&4))
         resp-=4;
-    else if ((s.dir&4)&&(resp&1))
+    else if ((s->dir&4)&&(resp&1))
         resp-=1;
     return resp;
 }
@@ -421,145 +437,161 @@ int simple_path(int avn){//solo un camino posible = n,camino cerrado y multiples
         return 0;
 }
 
-int go_right(struct subject s,int dir,int m,int n, int ar[][n]){
-    if(s.dir!=dir){
-        if(s.dir==8&&(dir&1)){
-            s.j+=1;
+int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
+    if(s->dir!=dir){
+        if(s->dir==8&&(dir&1)){
+            s->j+=1;
             dir=1;
-        }else if(s.dir==4&&(dir&8)){
-            s.i-=1;
+        }else if(s->dir==4&&(dir&8)){
+            s->i-=1;
             dir=8;
-        }else if(s.dir==2&&(dir&4)){
-            s.j-=1;
+        }else if(s->dir==2&&(dir&4)){
+            s->j-=1;
             dir=4;
-        }else if(s.dir==1&&(dir&2)){
-            s.i+=1;
+        }else if(s->dir==1&&(dir&2)){
+            s->i+=1;
             dir=2;
         }else
             return 0;
-        s.dir=dir;
-        s.sum_ang+=90;
+        s->dir=dir;
+        s->sum_ang+=90;
+        if(s->retread)
+            ar[s->i][s->j]+=s->rev;
+        else
+            ar[s->i][s->j]+=s->fordw;
         return 1;
     }
     return 0;
 }
-int go_left(struct subject s,int dir,int m,int n, int ar[][n]){
-    if(s.dir!=dir){
-        if(s.dir==8&&(dir&4)){
-            s.j-=1;
+int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
+    if(s->dir!=dir){
+        if(s->dir==8&&(dir&4)){
+            s->j-=1;
             dir=4;
-        }else if(s.dir==4&&(dir&2)){
-            s.i+=1;
+        }else if(s->dir==4&&(dir&2)){
+            s->i+=1;
             dir=2;
-        }else if(s.dir==2&&(dir&1)){
-            s.j+=1;
+        }else if(s->dir==2&&(dir&1)){
+            s->j+=1;
             dir=1;
-        }else if(s.dir==1&&(dir&8)){
-            s.i-=1;
+        }else if(s->dir==1&&(dir&8)){
+            s->i-=1;
             dir=8;
         }else
             return 0;
-        s.dir=dir;
-        s.sum_ang-=90;
+        s->dir=dir;
+        s->sum_ang-=90;
+        if(s->retread)
+            ar[s->i][s->j]+=s->rev;
+        else
+            ar[s->i][s->j]+=s->fordw;
         return 1;
     }
     return 0;
 }
-int go_straight(struct subject s,int dir,int m,int n, int ar[][n]){
-    if(s.dir&dir){
-        if(s.dir==8){
-            s.i-=1;
-        }else if(s.dir==4){
-            s.j-=1;
-        }else if(s.dir==2){
-            s.i+=1;
-        }else if(s.dir==1){
-            s.j+=1;
+int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
+    if(s->dir&dir){
+        if(s->dir==8){
+            s->i-=1;
+        }else if(s->dir==4){
+            s->j-=1;
+        }else if(s->dir==2){
+            s->i+=1;
+        }else if(s->dir==1){
+            s->j+=1;
         }
+        if(s->retread)
+            ar[s->i][s->j]+=s->rev;
+        else
+            ar[s->i][s->j]+=s->fordw;
         return 1;
     }
     return 0;
 }
-void go_back(struct subject s,int m,int n, int ar[][n]){
-    s.retread=1;
-    if(s.dir==8){
-        s.dir=2;
-        s.i+=1;
-    }else if(s.dir==4){
-        s.dir=1;
-        s.j+=1;
-    }else if(s.dir==2){
-        s.dir=8;
-        s.i-=1;
-    }else if(s.dir==1){
-        s.dir=4;
-        s.j-=1;
+void go_back(struct subject *s,int m,int n, int ar[][n]){
+    s->retread=1;
+    if(s->dir==8){
+        s->dir=2;
+        s->i+=1;
+    }else if(s->dir==4){
+        s->dir=1;
+        s->j+=1;
+    }else if(s->dir==2){
+        s->dir=8;
+        s->i-=1;
+    }else if(s->dir==1){
+        s->dir=4;
+        s->j-=1;
     }
-    if(s.sum_ang<0)
-        s.sum_ang-=180;
+    if(s->sum_ang<0)
+        s->sum_ang-=180;
     else
-        s.sum_ang+=180;
+        s->sum_ang+=180;
+    ar[s->i][s->j]+=s->rev;
 }
 
 int random_mouse(int m,int n, int ar[][n]){
     if(raton.i==ext_i&&raton.j==ext_j)
         return 1;
     else{
-        int dir_avan=dir_avanc(raton,m,n,ar);
-        if(dir_avan==0)
-            go_back(raton,m,n,ar);
-        else if(simple_path(dir_avan)){
-            if(go_straight(raton,dir_avan,m,n,ar))
-                return 0;
-            else if(go_left(raton,dir_avan,m,n,ar))
-                return 0;
-            else if(go_right(raton,dir_avan,m,n,ar))
-                return 0;
-            else{
-                int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
-                int random=rand()%4;
-                while(selec[random]==0)//quitar while si raton puede devolverse
-                    random=rand()%4;
-                dir_avan=selec[random];
-                if(go_straight(raton,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_left(raton,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_right(raton,dir_avan,m,n,ar))
-                    return 0;
-                else
-                    go_back(raton,m,n,ar);
-                return 0;
-            }
+        int dir_avan=dir_avanc(&raton,m,n,ar);
+        if(dir_avan==0){
+            go_back(&raton,m,n,ar);
+            return 0;
         }
-        return 0;
+        else if(simple_path(dir_avan)){
+            if(go_straight(&raton,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&raton,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&raton,dir_avan,m,n,ar))
+                return 0;
+        }
+        else{
+            int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
+            int random=rand()%4;
+            while(selec[random]==0)//quitar while si raton puede devolverse
+                random=rand()%4;
+            dir_avan=selec[random];
+            if(go_straight(&raton,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&raton,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&raton,dir_avan,m,n,ar))
+                return 0;
+            else
+                go_back(&raton,m,n,ar);
+            return 0;
+        }
     }
 }
+
 
 int left_hand(int m,int n, int ar[][n]){
     if(mano_izq.i==ext_i&&mano_izq.j==ext_j)
         return 1;
     else{
-        int dir_avan=dir_avanc(mano_izq,m,n,ar);
-        if(dir_avan==0)
-            go_back(mano_izq,m,n,ar);
-        else if(simple_path(dir_avan)){
-            if(go_straight(mano_izq,dir_avan,m,n,ar))
-                return 0;
-            else if(go_left(mano_izq,dir_avan,m,n,ar))
-                return 0;
-            else if(go_right(mano_izq,dir_avan,m,n,ar))
-                return 0;
-            else{
-                if(go_left(mano_izq,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_straight(mano_izq,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_right(mano_izq,dir_avan,m,n,ar))
-                    return 0;
-            }
+        int dir_avan=dir_avanc(&mano_izq,m,n,ar);
+        if(dir_avan==0){
+            go_back(&mano_izq,m,n,ar);
+            return 0;
         }
-        return 0;
+        else if(simple_path(dir_avan)){
+            if(go_straight(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+        }
+        else{
+            if(go_left(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+            else if(go_straight(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&mano_izq,dir_avan,m,n,ar))
+                return 0;
+        }
     }
 }
 
@@ -567,26 +599,27 @@ int right_hand(int m,int n, int ar[][n]){
     if(mano_der.i==ext_i&&mano_der.j==ext_j)
         return 1;
     else{
-        int dir_avan=dir_avanc(mano_der,m,n,ar);
-        if(dir_avan==0)
-            go_back(mano_der,m,n,ar);
-        else if(simple_path(dir_avan)){
-            if(go_straight(mano_der,dir_avan,m,n,ar))
-                return 0;
-            else if(go_left(mano_der,dir_avan,m,n,ar))
-                return 0;
-            else if(go_right(mano_der,dir_avan,m,n,ar))
-                return 0;
-            else{
-                if(go_right(mano_der,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_straight(mano_der,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_left(mano_der,dir_avan,m,n,ar))
-                    return 0;
-            }
+        int dir_avan=dir_avanc(&mano_der,m,n,ar);
+        if(dir_avan==0){
+            go_back(&mano_der,m,n,ar);
+            return 0;
         }
-        return 0;
+        else if(simple_path(dir_avan)){
+            if(go_straight(&mano_der,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&mano_der,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&mano_der,dir_avan,m,n,ar))
+                return 0;
+        }
+        else{
+            if(go_right(&mano_der,dir_avan,m,n,ar))
+                return 0;
+            else if(go_straight(&mano_der,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&mano_der,dir_avan,m,n,ar))
+                return 0;
+        }
     }
 }
 
@@ -594,49 +627,50 @@ int pledge_alg(int m,int n, int ar[][n]){
     if(pledge.i==ext_i&&pledge.j==ext_j)
         return 1;
     else{
-        int dir_avan=dir_avanc(pledge,m,n,ar);
-        if(dir_avan==0)
-            go_back(pledge,m,n,ar);
+        int dir_avan=dir_avanc(&pledge,m,n,ar);
+        if(dir_avan==0){
+            go_back(&pledge,m,n,ar);
+            return 0;
+        }
         else if(simple_path(dir_avan)){
-            if(go_straight(pledge,dir_avan,m,n,ar))
+            if(go_straight(&pledge,dir_avan,m,n,ar))
                 return 0;
-            else if(go_left(pledge,dir_avan,m,n,ar))
+            else if(go_left(&pledge,dir_avan,m,n,ar))
                 return 0;
-            else if(go_right(pledge,dir_avan,m,n,ar))
+            else if(go_right(&pledge,dir_avan,m,n,ar))
                 return 0;
+        }
+        else{
+            if(pledge.sum_ang==0){
+                int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
+                int random=rand()%4;
+                while(selec[random]==0)
+                    random=rand()%4;
+                dir_avan=selec[random];
+            }
+            if(pledge.sum_ang<0){
+                if(go_left(&pledge,dir_avan,m,n,ar))
+                    return 0;
+                else if(go_straight(&pledge,dir_avan,m,n,ar))
+                    return 0;
+                else if(go_right(&pledge,dir_avan,m,n,ar))
+                    return 0;
+                else
+                    go_back(&pledge,m,n,ar);
+                return 0;
+            }
             else{
-                if(pledge.sum_ang==0){
-                    int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
-                    int random=rand()%4;
-                    while(selec[random]==0)
-                        random=rand()%4;
-                    dir_avan=selec[random];
-                }
-                if(pledge.sum_ang<0){
-                    if(go_left(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else if(go_straight(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else if(go_right(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else
-                        go_back(pledge,m,n,ar);
+                    if(go_right(&pledge,dir_avan,m,n,ar))
                     return 0;
-                }
-                else{
-                    if(go_right(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else if(go_straight(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else if(go_left(pledge,dir_avan,m,n,ar))
-                        return 0;
-                    else
-                        go_back(pledge,m,n,ar);
+                else if(go_straight(&pledge,dir_avan,m,n,ar))
                     return 0;
-                }
+                    else if(go_left(&pledge,dir_avan,m,n,ar))
+                    return 0;
+                else
+                    go_back(&pledge,m,n,ar);
+                return 0;
             }
         }
-        return 0;
     }
 }
 
@@ -644,33 +678,41 @@ int tremaux_alg(int m,int n, int ar[][n]){
     if(tremaux.i==ext_i&&tremaux.j==ext_j)
         return 1;
     else{
-        int dir_avan=dir_avanc_trem(tremaux,m,n,ar);
-        if(dir_avan==0)
-            go_back(tremaux,m,n,ar);
-        else if(simple_path(dir_avan)){
-            if(go_straight(tremaux,dir_avan,m,n,ar))
-                return 0;
-            else if(go_left(tremaux,dir_avan,m,n,ar))
-                return 0;
-            else if(go_right(tremaux,dir_avan,m,n,ar))
-                return 0;
-            else{
-                int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
-                int random=rand()%4;
-                while(selec[random]==0)
-                    random=rand()%4;
-                dir_avan=selec[random];
-                if(go_straight(tremaux,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_left(tremaux,dir_avan,m,n,ar))
-                    return 0;
-                else if(go_right(tremaux,dir_avan,m,n,ar))
-                    return 0;
-                else
-                    go_back(tremaux,m,n,ar);
-                return 0;
-            }
+        int dir_avan=dir_avanc_trem(&tremaux,m,n,ar);
+        if(dir_avan==0){
+            go_back(&tremaux,m,n,ar);
+            return 0;
         }
-        return 0;
+        else if(simple_path(dir_avan)){
+            if(go_straight(&tremaux,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&tremaux,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&tremaux,dir_avan,m,n,ar))
+                return 0;
+        }
+        else{
+            int selec[4]={(dir_avan&1),(dir_avan&2),(dir_avan&4),(dir_avan&8)};
+            int random=rand()%4;
+            while(selec[random]==0)
+                random=rand()%4;
+            dir_avan=selec[random];
+            if(go_straight(&tremaux,dir_avan,m,n,ar))
+                return 0;
+            else if(go_left(&tremaux,dir_avan,m,n,ar))
+                return 0;
+            else if(go_right(&tremaux,dir_avan,m,n,ar))
+                return 0;
+            else
+                go_back(&tremaux,m,n,ar);
+            return 0;
+        }
+    }
+}
+
+void run(){
+    int i=0;
+    while(!left_hand(2*BaseF+1,2*BaseC+1,&ArPant)){
+        i++;
     }
 }
