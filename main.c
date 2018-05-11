@@ -24,7 +24,6 @@ struct subject{//guarda el avanze sobre el laberinto
     int sum_ang;
     int fordw;  //via avanzar
     int rev;    //via retroceder
-    int retread;// bool avanzar=0, retroceder=1;
     int r;  //colores
     int g;
     int b;
@@ -308,7 +307,7 @@ void desplegar(){
         else if(ArPant[i]==1)
             printf("  ");
         else
-            printf("<>");
+            printf("**");
     }
 }
 
@@ -350,44 +349,45 @@ void setij(){
     int dir=0;
     if(ini_i==0){
         dir=2;
-        ini_i+=1;
+        //ini_i+=1;
     }
     else if(ini_i==2*BaseF){
         dir=8;
-        ini_i-=1;
+        //ini_i-=1;
     }
     else if(ini_j==0){
         dir=1;
-        ini_j+=1;
+        //ini_j+=1;
     }
     else{
         dir=4;
-        ini_j-=1;
+        //ini_j-=1;
     }
-    raton.dir=mano_izq.dir=mano_der.dir=pledge.dir=dir;
-    raton.sum_ang=mano_izq.sum_ang=mano_der.sum_ang=pledge.sum_ang=0;
+    raton.dir=mano_izq.dir=mano_der.dir=pledge.dir=tremaux.dir=dir;
+    raton.sum_ang=mano_izq.sum_ang=mano_der.sum_ang=pledge.sum_ang=tremaux.sum_ang=0;
     raton.fordw=2;
-    raton.rev=256;
+    raton.rev=4096;
     mano_izq.fordw=4;
-    mano_izq.rev=128;
+    mano_izq.rev=2048;
     mano_der.fordw=8;
-    mano_der.rev=64;
+    mano_der.rev=1024;
     pledge.fordw=16;
-    pledge.rev=32;
-    raton.retread=mano_izq.retread=mano_der.retread=pledge.retread=0;
-    raton.i=mano_izq.i=mano_der.i=pledge.i=ini_i;
-    raton.j=mano_izq.j=mano_der.j=pledge.j=ini_j;
+    pledge.rev=512;
+    tremaux.fordw=32;
+    tremaux.rev=256;
+    raton.i=mano_izq.i=mano_der.i=pledge.i=tremaux.i=ini_i;
+    raton.j=mano_izq.j=mano_der.j=pledge.j=tremaux.j=ini_j;
 }
 
 int dir_avanc(struct subject *s,int m,int n, int ar[][n]){
     int resp=0;
-    if(ar[s->i][s->j+1]!=0)
+    if(ar[s->i][s->j+1]!=0&&((s->i!=ini_i)||(s->j+1!=ini_j)))
         resp=1;
-    if(ar[s->i+1][s->j]!=0)
+    if(ar[s->i+1][s->j]!=0&&((s->i+1!=ini_i)||(s->j!=ini_j)))
         resp+=2;
-    if(ar[s->i][s->j-1]!=0)
+    if(ar[s->i][s->j-1]!=0&&((s->i!=ini_i)||(s->j-1!=ini_j)))
         resp+=4;
-    if(ar[s->i-1][s->j]!=0)
+    if(ar[s->i-1][s->j]!=0&&((s->i-1!=ini_i)||(s->j!=ini_j)))
         resp+=8;
     if ((s->dir&8)&&(resp&2))
         resp-=2;
@@ -402,13 +402,13 @@ int dir_avanc(struct subject *s,int m,int n, int ar[][n]){
 
 int dir_avanc_trem(struct subject *s,int m,int n, int ar[][n]){
     int resp=0;
-    if(ar[s->i][s->j+1]!=0&&!(s->rev&ar[s->i][s->j+1]))
+    if(ar[s->i][s->j+1]!=0&&!(s->rev&ar[s->i][s->j+1]&&s->fordw&ar[s->i][s->j+1])&&((s->i!=ini_i)||(s->j+1!=ini_j)))
         resp=1;
-    if(ar[s->i+1][s->j]!=0&&!(s->rev&ar[s->i+1][s->j]))
+    if(ar[s->i+1][s->j]!=0&&!(s->rev&ar[s->i+1][s->j]&&s->fordw&ar[s->i+1][s->j])&&((s->i+1!=ini_i)||(s->j!=ini_j)))
         resp+=2;
-    if(ar[s->i][s->j-1]!=0&&!(s->rev&ar[s->i][s->j-1]))
-        resp=4;
-    if(ar[s->i-1][s->j]!=0&&!(s->rev&ar[s->i-1][s->j]))
+    if(ar[s->i][s->j-1]!=0&&!(s->rev&ar[s->i][s->j-1]&&s->fordw&ar[s->i][s->j-1])&&((s->i!=ini_i)||(s->j-1!=ini_j)))
+        resp+=4;
+    if(ar[s->i-1][s->j]!=0&&!(s->rev&ar[s->i-1][s->j]&&s->fordw&ar[s->i-1][s->j])&&((s->i-1!=ini_i)||(s->j!=ini_j)))
         resp+=8;
     if ((s->dir&8)&&(resp&2))
         resp-=2;
@@ -455,7 +455,7 @@ int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
             return 0;
         s->dir=dir;
         s->sum_ang+=90;
-        if(s->retread)
+        if(s->dir&8||s->dir&4)
             ar[s->i][s->j]+=s->rev;
         else
             ar[s->i][s->j]+=s->fordw;
@@ -481,7 +481,7 @@ int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
             return 0;
         s->dir=dir;
         s->sum_ang-=90;
-        if(s->retread)
+        if(s->dir&8||s->dir&4)
             ar[s->i][s->j]+=s->rev;
         else
             ar[s->i][s->j]+=s->fordw;
@@ -500,7 +500,7 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
         }else if(s->dir==1){
             s->j+=1;
         }
-        if(s->retread)
+        if(s->dir&8||s->dir&4)
             ar[s->i][s->j]+=s->rev;
         else
             ar[s->i][s->j]+=s->fordw;
@@ -509,7 +509,6 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
     return 0;
 }
 void go_back(struct subject *s,int m,int n, int ar[][n]){
-    s->retread=1;
     if(s->dir==8){
         s->dir=2;
         s->i+=1;
@@ -527,7 +526,10 @@ void go_back(struct subject *s,int m,int n, int ar[][n]){
         s->sum_ang-=180;
     else
         s->sum_ang+=180;
-    ar[s->i][s->j]+=s->rev;
+    if(s->dir&8||s->dir&4)
+        ar[s->i][s->j]+=s->rev;
+    else
+        ar[s->i][s->j]+=s->fordw;
 }
 
 int random_mouse(int m,int n, int ar[][n]){
@@ -709,10 +711,18 @@ int tremaux_alg(int m,int n, int ar[][n]){
         }
     }
 }
-
+/*
 void run(){
     int i=0;
-    while(!left_hand(2*BaseF+1,2*BaseC+1,&ArPant)){
+    while(i<10000){
+        tremaux_alg(2*BaseF+1,2*BaseC+1,&ArPant);
+        i++;
+    }
+}
+*/
+void run(){
+    int i=0;
+    while(!pledge_alg(2*BaseF+1,2*BaseC+1,&ArPant)){
         i++;
     }
 }
