@@ -1,0 +1,41 @@
+Algoritmo de Fattah 
+
+
+The maze-routing algorithm is a low overhead method to find the way between any two locations of the maze. 
+The algorithm is initially proposed for chip multiprocessors (CMPs) domain and guarantees to work for any grid-based maze. 
+In addition to finding paths between two location of the grid (maze), the algorithm can detect when there is no path between the source and destination.
+ Also, the algorithm is to be used by an inside traveler with no prior knowledge of the maze with fixed memory complexity regardless of the maze size; requiring 4 variables in total for finding the path and detecting the unreachable locations. 
+Nevertheless, the algorithm is not to find the shortest path.
+
+Maze-routing algorithm uses the notion of Manhattan distance (MD) and relies on the property of grids that the MD increments/decrements exactly by 1 when moving from one location to any 4 neighboring locations. 
+Here is the pseudocode without the capability to detect unreachable locations.
+
+Point src, dst;// Source and destination coordinates
+
+// cur also indicates the coordinates of the current location
+int MD_best = MD(src, dst);// It stores the closest MD we ever had to dst
+
+// A productive path is the one that makes our MD to dst smaller
+
+while(cur != dst){
+    
+	if(there exists a productive path){
+        
+		Take the productive path;
+    
+	}else{
+        
+		MD_best = MD(cur, dst);
+       
+		 Imagine a line between cur and dst;
+        
+		Take the first path in the left/right of the line;
+		// The left/right selection affects the following hand rule
+        
+		while(MD(cur, dst) != MD_best || there does not exist a productive path){
+           
+			Follow the right-hand/left-hand rule;// The opposite of the selected side of the line
+    
+	}
+
+}
