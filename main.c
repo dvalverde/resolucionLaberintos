@@ -345,8 +345,6 @@ void setij(){
     ini_j=Entry%(2*BaseC+1);
     ext_i=Exit/(2*BaseC+1);
     ext_j=Exit%(2*BaseC+1);
-    raton.i=mano_izq.i=mano_der.i=pledge.i=ini_i;
-    raton.j=mano_izq.j=mano_der.j=pledge.j=ini_j;
     int dir=0;
     if(ini_i==0){
         dir=2;
@@ -453,20 +451,24 @@ int dir_avanc_1(struct subject *s,int m,int n, int ar[][n]){
 int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
     if(s->dir!=dir){
         int resdir=s->dir;
+        int i=s->i;
+        int j=s->j;
         if(s->dir==8&&(dir&1)){
-            s->j+=1;
+            j+=1;
             resdir=1;
         }else if(s->dir==4&&(dir&8)){
-            s->i-=1;
+            i-=1;
             resdir=8;
         }else if(s->dir==2&&(dir&4)){
-            s->j-=1;
+            j-=1;
             resdir=4;
         }else if(s->dir==1&&(dir&2)){
-            s->i+=1;
+            i+=1;
             resdir=2;
         }else
             return 0;
+        s->j=j;
+        s->i=i;
         s->dir=resdir;
         s->sum_ang+=90;
         if(s->dir&8||s->dir&4){
@@ -484,20 +486,24 @@ int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
 int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
     if(s->dir!=dir){
         int resdir=s->dir;
+        int i=s->i;
+        int j=s->j;
         if(s->dir==8&&(dir&4)){
-            s->j-=1;
+            j-=1;
             resdir=4;
         }else if(s->dir==4&&(dir&2)){
-            s->i+=1;
+            i+=1;
             resdir=2;
         }else if(s->dir==2&&(dir&1)){
-            s->j+=1;
+            j+=1;
             resdir=1;
         }else if(s->dir==1&&(dir&8)){
-            s->i-=1;
+            i-=1;
             resdir=8;
         }else
             return 0;
+        s->j=j;
+        s->i=i;
         s->dir=resdir;
         s->sum_ang-=90;
         if(s->dir&8||s->dir&4){
@@ -514,16 +520,20 @@ int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
 }
 int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
     if(s->dir&dir){
+        int i=s->i;
+        int j=s->j;
         if(s->dir==8){
-            s->i-=1;
+            i-=1;
         }else if(s->dir==4){
-            s->j-=1;
+            j-=1;
         }else if(s->dir==2){
-            s->i+=1;
+            i+=1;
         }else if(s->dir==1){
-            s->j+=1;
+            j+=1;
         }else
             return 0;
+        s->j=j;
+        s->i=i;
         if(s->dir&8||s->dir&4){
             if(!(ar[s->i][s->j]&s->rev))
                 ar[s->i][s->j]+=s->rev;
@@ -537,19 +547,23 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
     return 0;
 }
 void go_back(struct subject *s,int m,int n, int ar[][n]){
+    int i=s->i;
+    int j=s->j;
     if(s->dir==8){
         s->dir=2;
-        s->i+=1;
+        i+=1;
     }else if(s->dir==4){
         s->dir=1;
-        s->j+=1;
+        j+=1;
     }else if(s->dir==2){
         s->dir=8;
-        s->i-=1;
+        i-=1;
     }else if(s->dir==1){
         s->dir=4;
-        s->j-=1;
+        j-=1;
     }
+    s->j=j;
+    s->i=i;
     if(s->sum_ang<0)
         s->sum_ang-=180;
     else
@@ -801,7 +815,6 @@ int fattah_alg(int m,int n, int ar[][n]){
 }
 
 
-
 /*
 void run(){
     int i=0;
@@ -816,5 +829,10 @@ void run(){
     while(!tremaux_alg(2*BaseF+1,2*BaseC+1,&ArPant)){
         i++;
     }
+}
+
+void draw_path(struct subject *s,int pos_x,int pos_y,int wight,int higth,int m,int n, int ar[][n]){
+    //no pintar otra vez, pintar encima añadiendo
+    //mostrar parte,no todo, pintar en superficie 12 veces mas grande que parte
 }
 
