@@ -14,6 +14,10 @@ int BaseC=1;
 int Entry=0;
 int Exit=0;
 
+int RT_raton[4194304]={0};//matr1
+int RT_pledge[4194304]={0};//matr2
+int RT_tremaux[4194304]={0};//matr3
+int RT_fattah[4194304]={0};//matr4
 int ini_i,ini_j,ext_i,ext_j;
 int ready=0;
 int MD_best=0;
@@ -22,6 +26,7 @@ struct subject{//guarda el avanze sobre el laberinto
     int i;//posicion
     int j;
     int dir;//8 up, 4 left , 2 down, 1 right, 0 stay
+    int matr; //matriz asosiada
     int sum_ang;
     int fordw;  //via avanzar
     int rev;    //via retroceder
@@ -374,6 +379,12 @@ void setij(){
     fattah.rev=128;
     raton.i=mano_izq.i=mano_der.i=pledge.i=tremaux.i=fattah.i=ini_i;
     raton.j=mano_izq.j=mano_der.j=pledge.j=tremaux.j=fattah.j=ini_j;
+    raton.matr=1;//matrices asosiadas
+    pledge.matr=2;
+    tremaux.matr=3;
+    fattah.matr=4;
+    mano_der.matr=0;
+    mano_izq.matr=-1;
 }
 
 int MD(int i1, int j1,int i2,int j2){
@@ -448,6 +459,54 @@ int dir_avanc_1(struct subject *s,int m,int n, int ar[][n]){
     return resp;
 }
 
+void mat_inc(int i,int j,int n,int mat[][n]){
+    mat[i][j]++;
+}
+
+void mat_zero(int m,int n,int mat[][n]){
+    int i,j;
+    for(i=0;i<m;i++)
+        for(j=0;j<m;j++)
+            mat[i][j]=0;
+}
+
+int mat_read(int i,int j,int n,int mat[][n]){
+    return mat[i][j];
+}
+
+void reg_mat(int i,int j,struct subject *s){//llamar con i/2,j/2 de casilla del laberinto
+    if(s->matr==1)
+        mat_inc(i,j,BaseC,&RT_raton);
+    else if(s->matr==2)
+        mat_inc(i,j,BaseC,&RT_pledge);
+    else if(s->matr==3)
+        mat_inc(i,j,BaseC,&RT_tremaux);
+    else if(s->matr==4)
+        mat_inc(i,j,BaseC,&RT_fattah);
+}
+
+int obt_mat(int i,int j,struct subject *s){//llamar con i/2,j/2 de casilla del laberinto
+    int resp=0;
+    if(s->matr==1)
+        resp=mat_read(i,j,BaseC,&RT_raton);
+    else if(s->matr==2)
+        resp=mat_read(i,j,BaseC,&RT_pledge);
+    else if(s->matr==3)
+        resp=mat_read(i,j,BaseC,&RT_tremaux);
+    else if(s->matr==4)
+        resp=mat_read(i,j,BaseC,&RT_fattah);
+    else if(s->matr==-1)
+        resp=4;
+    return resp;
+}
+
+void rest_mat(){//llamar al final de terminar solucion
+        mat_zero(BaseF,BaseC,&RT_raton);
+        mat_zero(BaseF,BaseC,&RT_pledge);
+        mat_zero(BaseF,BaseC,&RT_tremaux);
+        mat_zero(BaseF,BaseC,&RT_fattah);
+}
+
 int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
     if(s->dir!=dir){
         int resdir=s->dir;
@@ -469,6 +528,7 @@ int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
             return 0;
         s->j=j;
         s->i=i;
+        reg_mat(i/2,j/2,s);
         s->dir=resdir;
         s->sum_ang+=90;
         if(s->dir&8||s->dir&4){
@@ -796,6 +856,7 @@ int tremaux_alg(int m,int n, int ar[][n]){ //marcas=8192
     }
 }
 
+/*
 int fattah_alg(int m,int n, int ar[][n]){
     if(fattah.i!=ext_i||fattah.j!=ext_j){
         if(there exists a productive path){
@@ -815,7 +876,7 @@ int fattah_alg(int m,int n, int ar[][n]){
 }
 
 
-/*
+
 void run(){
     int i=0;
     while(i<1000){
