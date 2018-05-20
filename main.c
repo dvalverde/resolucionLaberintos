@@ -856,7 +856,7 @@ int tremaux_alg(int m,int n, int ar[][n]){ //marcas=8192
     }
 }
 
-/*
+/*Heuristica Manhatan -> H = Math.Abs(nodoActual.X – nodoFinal.X) + Math.Abs(nodoActual.Y – nodoFinal.Y)
 int fattah_alg(int m,int n, int ar[][n]){
     if(fattah.i!=ext_i||fattah.j!=ext_j){
         if(there exists a productive path){
@@ -893,7 +893,7 @@ void run(){
 }
 
 void draw_path(struct subject *s,int pos_x,int pos_y,int wight,int higth,int m,int n, int ar[][n]){
-    //no pintar otra vez, pintar encima a�adiendo
+    //no pintar otra vez, pintar encima añadiendo
     //mostrar parte,no todo, pintar en superficie 12 veces mas grande que parte
 }
 
