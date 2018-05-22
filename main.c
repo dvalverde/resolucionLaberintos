@@ -35,11 +35,11 @@ int SolReady=0;
 int RunSol=0;
 int MazeOn=0;
 
-int solRA=0;
-int solMD=0;
-int solMI=0;
-int solAP=0;
-int solAT=0;
+int solRA=1;
+int solMD=1;
+int solMI=1;
+int solAP=1;
+int solAT=1;
 int solAF=0;
 int ttlRA=0;
 int ttlMD=0;
@@ -164,6 +164,25 @@ gboolean cicloSolucion(void* data);
 int main(int argc, char *argv[])
 {
     srand(time(NULL));
+    
+    raton.r=1;
+    raton.g=0;
+    raton.b=0;
+    mano_der.r=0;
+    mano_der.g=1;
+    mano_der.b=0;
+    mano_izq.r=0;
+    mano_izq.g=0;
+    mano_izq.b=1;
+    pledge.r=1;
+    pledge.g=1;
+    pledge.b=0;
+    tremaux.r=0;
+    tremaux.g=1;
+    tremaux.b=1;
+    fattah.r=1;
+    fattah.g=0;
+    fattah.b=1;
     
     GtkBuilder      *builder;
 
@@ -487,13 +506,13 @@ void desplegar(){
     //int tam=10;
     for(int i = 0;i<l;i++){
         if(i%n==0)
-            printf("\n");
+            g_print("\n");
         if(ArPant[i]==0)
-            printf("XX");
+            g_print("XX");
         else if(ArPant[i]==1)
-            printf("  ");
+            g_print("  ");
         else
-            printf("**");
+            g_print("**");
     }
 }
 
@@ -1653,8 +1672,10 @@ void on_chkMI_toggled(){
 
 void on_chkRA_toggled(){
 	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkRA))){
+		g_print("seleccionado");
 		solRA=1;
 	}else{
+		g_print("deseleccionado");
 		solRA=0;
 	}
 }
@@ -1898,6 +1919,8 @@ void Pasar(){
 gboolean cicloSolucion(void* data)
 {
 	if(!RunSol){
+		g_print("ya solucion");
+		desplegar();
 		gchar *display;
 		display = g_strdup_printf("%d", ttlRA);
 		gtk_label_set_text (ral, display);  
@@ -1923,12 +1946,14 @@ gboolean cicloSolucion(void* data)
 		gtk_widget_queue_draw(GTK_WIDGET(DrawArea));
 		return FALSE;
 	}
+	g_print("aun no");
 	return TRUE;
 }
 
 void *correrSoluciones(void *k){
 	while(thrdon){
 		if(MazeOn&&correrHilo){
+			g_print("entro a correr%d\n",9);
 			restaurMazeMat();
 			RunSol=1;
 			readyRA=0;
@@ -1996,6 +2021,7 @@ void *correrSoluciones(void *k){
 			}
 			RunSol=0;
 			SolReady=0;
+			correrHilo=0;
 		}
 	}
 	return NULL;
