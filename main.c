@@ -56,9 +56,9 @@ struct subject{//guarda el avanze sobre el laberinto
     int sum_ang;
     int fordw;  //via avanzar
     int rev;    //via retroceder
-    int r;  //colores
-    int g;
-    int b;
+    double r;  //colores
+    double g;
+    double b;
 }raton,mano_izq,mano_der,pledge,tremaux,fattah;
 
 int SpwTrR[2796203]={0};
@@ -165,24 +165,24 @@ int main(int argc, char *argv[])
 {
     srand(time(NULL));
     
-    raton.r=1;
-    raton.g=0;
-    raton.b=0;
-    mano_der.r=0;
-    mano_der.g=1;
-    mano_der.b=0;
-    mano_izq.r=0;
-    mano_izq.g=0;
-    mano_izq.b=1;
-    pledge.r=1;
-    pledge.g=1;
-    pledge.b=0;
-    tremaux.r=0;
-    tremaux.g=1;
-    tremaux.b=1;
-    fattah.r=1;
-    fattah.g=0;
-    fattah.b=1;
+    raton.r=0.9;
+    raton.g=0.1;
+    raton.b=0.1;
+    mano_der.r=0.1;
+    mano_der.g=0.9;
+    mano_der.b=0.1;
+    mano_izq.r=0.1;
+    mano_izq.g=0.1;
+    mano_izq.b=0.9;
+    pledge.r=0.9;
+    pledge.g=0.9;
+    pledge.b=0.1;
+    tremaux.r=0.1;
+    tremaux.g=0.9;
+    tremaux.b=0.9;
+    fattah.r=0.9;
+    fattah.g=0.1;
+    fattah.b=0.9;
     
     GtkBuilder      *builder;
 
@@ -426,8 +426,8 @@ void setentrys(int m, int n,int ar[][n]){
 
 void resetMazeMat(){
 	int i,j;
-	for(i =0; i<(BaseF*2+1);i++){
-        for(j =0; j<(BaseC*2+1);j++){
+	for(i =0; i<BaseF*2+1;i++){
+        for(j =0; j<BaseC*2+1;j++){
 			ArPant[i*(BaseC*2+1)+j]=0;
 		}
 	}
@@ -446,7 +446,6 @@ void restaurMazeMat(){
 void generate_maze(){
     int t,i,j,n,act,E,S,ex;
     n=act=0;
-    resetMazeMat();
     for(i =0; i<BaseF*2;i++){
         for(j =0; j<BaseC;j++){
             t=i>>1;
@@ -511,8 +510,12 @@ void desplegar(){
             g_print("XX");
         else if(ArPant[i]==1)
             g_print("  ");
-        else
-            g_print("**");
+        else if(ArPant[i]%256!=0&&ArPant[i]>256)
+            g_print("-+");
+        else if(ArPant[i]%256!=0)
+			g_print(" +");
+		else if(ArPant[i]>256)
+			g_print("- ");
     }
 }
 
@@ -726,6 +729,14 @@ int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
         int resdir=s->dir;
         int i=s->i;
         int j=s->j;
+        if(s->dir&2||s->dir&4){
+            if(!(ar[s->i][s->j]&s->rev))
+                ar[s->i][s->j]+=s->rev;
+        }
+        else{
+            if(!(ar[s->i][s->j]&s->fordw))
+                ar[s->i][s->j]+=s->fordw;
+        }
         if(s->dir==8&&(dir&1)){
             j+=1;
             resdir=1;
@@ -745,14 +756,6 @@ int go_right(struct subject *s,int dir,int m,int n, int ar[][n]){
         reg_mat(i/2,j/2,s);
         s->dir=resdir;
         s->sum_ang+=90;
-        if(s->dir&8||s->dir&4){
-            if(!(ar[s->i][s->j]&s->rev))
-                ar[s->i][s->j]+=s->rev;
-        }
-        else{
-            if(!(ar[s->i][s->j]&s->fordw))
-                ar[s->i][s->j]+=s->fordw;
-        }
         return 1;
     }
     return 0;
@@ -762,6 +765,14 @@ int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
         int resdir=s->dir;
         int i=s->i;
         int j=s->j;
+        if(s->dir&2||s->dir&4){
+            if(!(ar[s->i][s->j]&s->rev))
+                ar[s->i][s->j]+=s->rev;
+        }
+        else{
+            if(!(ar[s->i][s->j]&s->fordw))
+                ar[s->i][s->j]+=s->fordw;
+        }
         if(s->dir==8&&(dir&4)){
             j-=1;
             resdir=4;
@@ -780,14 +791,6 @@ int go_left(struct subject *s,int dir,int m,int n, int ar[][n]){
         s->i=i;
         s->dir=resdir;
         s->sum_ang-=90;
-        if(s->dir&8||s->dir&4){
-            if(!(ar[s->i][s->j]&s->rev))
-                ar[s->i][s->j]+=s->rev;
-        }
-        else{
-            if(!(ar[s->i][s->j]&s->fordw))
-                ar[s->i][s->j]+=s->fordw;
-        }
         return 1;
     }
     return 0;
@@ -796,6 +799,14 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
     if(s->dir&dir){
         int i=s->i;
         int j=s->j;
+        if(s->dir&2||s->dir&4){
+            if(!(ar[s->i][s->j]&s->rev))
+                ar[s->i][s->j]+=s->rev;
+        }
+        else{
+            if(!(ar[s->i][s->j]&s->fordw))
+                ar[s->i][s->j]+=s->fordw;
+        }
         if(s->dir==8){
             i-=1;
         }else if(s->dir==4){
@@ -808,14 +819,6 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
             return 0;
         s->j=j;
         s->i=i;
-        if(s->dir&8||s->dir&4){
-            if(!(ar[s->i][s->j]&s->rev))
-                ar[s->i][s->j]+=s->rev;
-        }
-        else{
-            if(!(ar[s->i][s->j]&s->fordw))
-                ar[s->i][s->j]+=s->fordw;
-        }
         return 1;
     }
     return 0;
@@ -823,6 +826,10 @@ int go_straight(struct subject *s,int dir,int m,int n, int ar[][n]){
 void go_back(struct subject *s,int m,int n, int ar[][n]){
     int i=s->i;
     int j=s->j;
+    if(!(ar[s->i][s->j]&s->rev))
+		ar[s->i][s->j]+=s->rev;
+	if(!(ar[s->i][s->j]&s->fordw))
+		ar[s->i][s->j]+=s->fordw;
     if(s->dir==8){
         s->dir=2;
         i+=1;
@@ -842,14 +849,6 @@ void go_back(struct subject *s,int m,int n, int ar[][n]){
         s->sum_ang-=180;
     else
         s->sum_ang+=180;
-    if(s->dir&8||s->dir&4){
-        if(!(ar[s->i][s->j]&s->rev))
-            ar[s->i][s->j]+=s->rev;
-        }
-    else{
-        if(!(ar[s->i][s->j]&s->fordw))
-            ar[s->i][s->j]+=s->fordw;
-        }
 }
 
 int random_mouse(int m,int n, int ar[][n]){
@@ -1409,7 +1408,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 	else if(num_vias==3){
 		tot_v=n_path(act_path,0);
 		if(tot_v==6){// todo lleno
-			if(1){//get rigt turns from mat i/2,j/2 > 0
+			if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 				rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 				strln(cr,vias,n_via,i,j,n,mat,15,s);
 			}else{
@@ -1425,7 +1424,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 				rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 			}
 			else{
-				if(1){//get rigt turns from mat i/2,j/2 > 0
+				if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 					rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 					strln(cr,vias,n_via,i,j,n,mat,15,s);
 				}else{
@@ -1442,7 +1441,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 	else if(num_vias==4){
 		tot_v=n_path(act_path,0);
 		if(tot_v==8){
-			if(1){//get rigt turns from mat i/2,j/2 > 0
+			if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 				rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 			}else{
 				ltrln(cr,vias,n_via,i,j,n,mat,15,s);
@@ -1454,7 +1453,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 					strln(cr,vias,n_via,i,j,n,mat,15,s);
 				}
 				else{
-					if(1){//get rigt turns from mat i/2,j/2 > 0
+					if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 						rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 						strln(cr,vias,n_via,i,j,n,mat,15,s);
 					}else{
@@ -1469,7 +1468,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 				strln(cr,vias,n_via,i,j,n,mat,15,s);
 			}
 			else if(n_path(act_path,1)==1||n_path(act_path,4)==1||n_path(act_path,2)==1||n_path(act_path,8)==1){
-				if(1){//get rigt turns from mat i/2,j/2 > 0
+				if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 					rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 					strln(cr,vias,n_via,i,j,n,mat,15,s);
 				}else{
@@ -1482,7 +1481,7 @@ void reg_path(cairo_t *cr,int i,int j,int n,int mat[][n],struct subject *s){//su
 			}
 		}
 		else{
-			if(1){//get rigt turns from mat i/2,j/2 > 0
+			if(obt_mat(i/2,j/2,s)){//get rigt turns from mat i/2,j/2 > 0
 				rtrln(cr,vias,n_via,i,j,n,mat,15,s);
 				strln(cr,vias,n_via,i,j,n,mat,15,s);
 			}else{
@@ -1507,6 +1506,7 @@ static gboolean check_escape(GtkWidget *widget, GdkEventKey *event, gpointer dat
 		corriendo=0;
 		activo=0;
 		MazeOn=0;
+		resetMazeMat();
 		gtk_widget_set_sensitive (GTK_WIDGET(GuardarB), FALSE);
 		return TRUE;
 	}
@@ -1672,10 +1672,8 @@ void on_chkMI_toggled(){
 
 void on_chkRA_toggled(){
 	if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(chkRA))){
-		g_print("seleccionado");
 		solRA=1;
 	}else{
-		g_print("deseleccionado");
 		solRA=0;
 	}
 }
@@ -1702,6 +1700,7 @@ gboolean on_Maze_area_delete_event(GtkWidget *widget, GdkEvent *event, gpointer 
 	corriendo=0;
 	activo=0;
 	MazeOn=0;
+	resetMazeMat();
 	gtk_widget_set_sensitive (GTK_WIDGET(GuardarB), FALSE);
 	return TRUE;
 }
@@ -1804,31 +1803,37 @@ static void do_segdrawing(cairo_t *cr,int x, int y,int w, int h,int m,int n,int 
     tamC=2*depth+1;
     anti=antj=ii=0;
     */
-    cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_translate(cr,12, 12);
 	for(int i=0;i<h;i++){
 		for(int j=0; j<w; j++){
 			if(mat[y+i][x+j]==0){
+				cairo_set_source_rgb(cr, 0, 0, 0);
 				cairo_rectangle(cr, 0, 0, 12, 12);
 				cairo_fill(cr); 
 			} 
-			else {
+			else if(mat[y+i][x+j]!=1){//||!(y+i==ext_i&&x+j==ext_j)||!(y+i==ini_i&&x+j==ini_j)
 				if(solRA){
+					cairo_set_source_rgb(cr, raton.r, raton.g, raton.b);
 					reg_path(cr,y+i,x+j, n,mat,&raton);
 				}
 				if(solMD){
+					cairo_set_source_rgb(cr, mano_der.r, mano_der.g, mano_der.b);
 					reg_path(cr,y+i,x+j, n,mat,&mano_der);
 				}
 				if(solMI){
+					cairo_set_source_rgb(cr, mano_izq.r, mano_izq.g, mano_izq.b);
 					reg_path(cr,y+i,x+j, n,mat,&mano_izq);
 				}
 				if(solAP){
+					cairo_set_source_rgb(cr, pledge.r, pledge.g, pledge.b);
 					reg_path(cr,y+i,x+j, n,mat,&pledge);
 				}
 				if(solAT){
+					cairo_set_source_rgb(cr, tremaux.r, tremaux.g, tremaux.b);
 					reg_path(cr,y+i,x+j, n,mat,&tremaux);
 				}
 				/*if(solAF){
+					cairo_set_source_rgb(cr, fattah.r, fattah.g, fattah.b);
 					reg_path(cr,y+i,x+j, n,mat,&fattah);
 				}*/
 			}
@@ -1865,7 +1870,7 @@ static void do_drawing(){
 		cairo_set_source_surface (aux, completo, 0, 0);
 		alt=gdk_pixbuf_get_from_surface(completo,pos_x,pos_y,wd, hg);
 	}
-	GdkPixbuf *temp=gdk_pixbuf_scale_simple(alt, width, height, GDK_INTERP_TILES);
+	GdkPixbuf *temp=gdk_pixbuf_scale_simple(alt, width, height, GDK_INTERP_TILES);//GDK_INTERP_TILES
 	gdk_cairo_set_source_pixbuf(aux, temp, 0, 0);
 	cairo_paint(aux);
 	g_object_unref(alt);
@@ -1887,13 +1892,13 @@ static void do_bdrawing(cairo_t *cr){
 	int l=(2*BaseF+1)*(2*BaseC+1);
     int n=(2*BaseC+1);
     int tam=scale;
-    cairo_set_source_rgb(cr, 0, 0, 0);
     cairo_translate(cr, scale, scale);
     for(int i = 0;i<l;i++){
         if(i%n==0&&i!=0){
             cairo_translate(cr, -1*n*tam, tam);
         }
         if(ArPant[i]==0){
+			cairo_set_source_rgb(cr, 0, 0, 0);
 			cairo_rectangle(cr, 0, 0, tam, tam);
 			cairo_fill(cr); 
 		}
@@ -1919,7 +1924,6 @@ void Pasar(){
 gboolean cicloSolucion(void* data)
 {
 	if(!RunSol){
-		g_print("ya solucion");
 		desplegar();
 		gchar *display;
 		display = g_strdup_printf("%d", ttlRA);
@@ -1946,14 +1950,13 @@ gboolean cicloSolucion(void* data)
 		gtk_widget_queue_draw(GTK_WIDGET(DrawArea));
 		return FALSE;
 	}
-	g_print("aun no");
 	return TRUE;
 }
 
 void *correrSoluciones(void *k){
 	while(thrdon){
 		if(MazeOn&&correrHilo){
-			g_print("entro a correr%d\n",9);
+			//g_print("entro a correr%d\n",9);
 			restaurMazeMat();
 			RunSol=1;
 			readyRA=0;
