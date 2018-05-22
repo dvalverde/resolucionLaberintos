@@ -1306,18 +1306,18 @@ void uturn(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],struct 
 void strln(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],int act,struct subject *s){//sujeto tiene color
 	cairo_set_source_rgb(cr, s->r, s->g, s->b);
 	if (path&1&&path&4){
-		if((act&1)&&(mat[i][j-1]&s->fordw&&mat[i][j+1]&s->fordw)){
+		if((act&1)&&(mat[i][j-1]&s->fordw)&&(mat[i][j+1]&s->fordw)){
 			cairo_rectangle(cr, 0, n_via,		12, 1);
 			}
-		if((act&4)&&(mat[i][j-1]&s->rev&&mat[i][j+1]&s->rev)){
+		if((act&4)&&(mat[i][j-1]&s->rev)&&(mat[i][j+1]&s->rev)){
 			cairo_rectangle(cr, 0, 11-n_via,	12, 1);
 			}
 	}
 	if (path&2&&path&8){
-		if((act&2)&&(mat[i-1][j]&s->rev&&mat[i+1][j]&s->rev)){
+		if((act&2)&&(mat[i-1][j]&s->rev)&&(mat[i+1][j]&s->rev)){
 			cairo_rectangle(cr, 11-n_via, 0,	1, 12);
 			}
-		if((act&8)&&(mat[i-1][j]&s->fordw&&mat[i+1][j]&s->fordw)){
+		if((act&8)&&(mat[i-1][j]&s->fordw)&&(mat[i+1][j]&s->fordw)){
 			cairo_rectangle(cr, n_via, 0,		1, 12);
 			}
 	}
