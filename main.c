@@ -1299,6 +1299,7 @@ void uturn(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],struct 
 		cairo_rectangle(cr, n_via+1, 11-n_via,	10-2*n_via, 1);
 		cairo_rectangle(cr, 11-n_via, 0,		1, 12-n_via);
 	}
+	cairo_fill(cr); 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 }
 
@@ -1320,6 +1321,7 @@ void strln(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],int act
 			cairo_rectangle(cr, n_via, 0,		1, 12);
 			}
 	}
+	cairo_fill(cr); 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 }
 
@@ -1341,6 +1343,7 @@ void ltrln(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],int act
 		cairo_rectangle(cr, 11-n_via, n_via,	1+n_via, 1);
 		cairo_rectangle(cr, 11-n_via, 0,		1, 1+n_via);
 	}
+	cairo_fill(cr); 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 }
 
@@ -1362,6 +1365,7 @@ void rtrln(cairo_t *cr,int path,int n_via,int i,int j,int n,int mat[][n],int act
 		cairo_rectangle(cr, 0, 11-n_via,		11-n_via, 1);
 		cairo_rectangle(cr, 11-n_via, 0,		1, 11-n_via);
 	}
+	cairo_fill(cr); 
 	cairo_set_source_rgb(cr, 0, 0, 0);
 }
 
