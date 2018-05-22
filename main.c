@@ -41,6 +41,12 @@ int solMI=0;
 int solAP=0;
 int solAT=0;
 int solAF=0;
+int ttlRA=0;
+int ttlMD=0;
+int ttlMI=0;
+int ttlAP=0;
+int ttlAT=0;
+int ttlAF=0;
 
 struct subject{//guarda el avanze sobre el laberinto
     int i;//posicion
@@ -79,7 +85,7 @@ GtkSpinButton* columnas;
 GtkButton* GuardarB;
 GtkSwitch* switchB;
 
-GtkDialog* Cont_casillas;
+GtkApplicationWindow* Cont_casillas;
 GtkCheckButton* chkRA;
 GtkCheckButton* chkMD;
 GtkCheckButton* chkMI;
@@ -94,9 +100,6 @@ GtkLabel* atl;
 GtkLabel* afl;
 GtkButton* BEjeSol;
 GtkButton* salireje;
-GtkToggleButton* pausar;
-
-
 
 int corriendo=0;
 int solucion=1;
@@ -147,10 +150,15 @@ static void do_bdrawing(cairo_t *cr);
 static gboolean on_draw_event(GtkWidget *widget, cairo_t *cr, gpointer user_data);
 static gboolean check_escape(GtkWidget *widget, GdkEventKey *event, gpointer data);
 //
+
+pthread_t sol_thread;
+int thrdon=1;
+int correrHilo=0;
 void setij();
 int random_mouse(int m,int n, int ar[][n]);
 void run();
-void correrSoluciones();
+void *correrSoluciones(void *k);
+gboolean cicloSolucion(void* data);
 
 
 int main(int argc, char *argv[])
@@ -180,7 +188,7 @@ int main(int argc, char *argv[])
     GuardarB=GTK_BUTTON(gtk_builder_get_object(builder,"GuardarB"));
     switchB=GTK_SWITCH (gtk_builder_get_object(builder,"switch"));
     
-    Cont_casillas=GTK_DIALOG(gtk_builder_get_object(builder,"Cont_casillas"));
+    Cont_casillas=GTK_APPLICATION_WINDOW(gtk_builder_get_object(builder,"cont_casillas"));
 	chkRA=GTK_CHECK_BUTTON(gtk_builder_get_object(builder,"chkRA"));
 	chkMD=GTK_CHECK_BUTTON(gtk_builder_get_object(builder,"chkMD"));
 	chkMI=GTK_CHECK_BUTTON(gtk_builder_get_object(builder,"chkMI"));
@@ -195,7 +203,6 @@ int main(int argc, char *argv[])
 	afl=GTK_LABEL(gtk_builder_get_object(builder,"afl"));
 	BEjeSol=GTK_BUTTON(gtk_builder_get_object(builder,"BEjeSol"));
 	salireje=GTK_BUTTON(gtk_builder_get_object(builder,"salireje"));
-	pausar=GTK_TOGGLE_BUTTON(gtk_builder_get_object(builder,"pausar"));
     
     ABRIR=GTK_FILE_CHOOSER(DA);
 	GUARDAR=GTK_FILE_CHOOSER(DG);
@@ -204,9 +211,18 @@ int main(int argc, char *argv[])
     gtk_widget_set_sensitive (GTK_WIDGET(GuardarB), FALSE);
 
     g_object_unref(builder);
+    thrdon=1;
+    if(pthread_create(&sol_thread, NULL, correrSoluciones,&correrHilo)) {
+		fprintf(stderr, "Error creating thread cron\n");
+	}
 
     gtk_widget_show(window);
     gtk_main();
+    thrdon=0;
+    
+    if(pthread_join(sol_thread, NULL)) {
+		fprintf(stderr, "Error joining thread sol\n");
+	}
     /*
     BaseF=5;
 	BaseC=6;//n m > 1
@@ -1515,8 +1531,10 @@ void on_GenCancelar_clicked(){
 void on_ResolverB_clicked()
 {
 	if((!RunSol)&&MazeOn){
-		gtk_dialog_run(mnsjResolv);
+		rest_mat();
 		RunSol=1;
+		gtk_dialog_run(mnsjResolv);
+		
 	}
 }
 
@@ -1643,8 +1661,9 @@ void on_chkRA_toggled(){
 
 void on_BEjeSol_clicked(){
 	gtk_widget_hide(GTK_WIDGET(mnsjResolv));
-	gtk_dialog_run(GTK_DIALOG(Cont_casillas));
-	correrSoluciones();
+	gtk_widget_show(GTK_WIDGET(Cont_casillas));
+	correrHilo=1;
+	g_timeout_add(1000,cicloSolucion,NULL);
 }
 
 void on_salireje_clicked(){
@@ -1653,15 +1672,6 @@ void on_salireje_clicked(){
 	SolReady=1;//al detener el ciclo: poner 0
 }
 
-void on_pausar_toggled(){
-	if(gtk_toggle_button_get_active(pausar)){
-		gtk_button_set_label(GTK_BUTTON(pausar),"Continuar");
-		RunSol=0;
-	}else{
-		gtk_button_set_label(GTK_BUTTON(pausar),"Pausar");
-		RunSol=1;
-	}
-}
 
 //_______________________________________________________________________
 
@@ -1884,98 +1894,111 @@ void Pasar(){
 		scale=1;
 }
 //---------------------------------------------------------------
-void correrSoluciones(){
-	if(MazeOn){
-		int casillas=0;
-		restaurMazeMat();
-		RunSol=1;
-		readyRA=0;
-		readyMD=0;
-		readyMI=0;
-		readyAP=0;
-		readyAT=0;
-		readyAF=0;
-		setij();
-		while(!SolReady){
-			if(solRA){
-				if(!readyRA){
-					readyRA=random_mouse(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (ral, display);
-					g_free(display);   
-					gtk_widget_queue_draw(GTK_WIDGET(ral));
-				}
-					
-			}
-			if(solMD){
-				if(!readyMD){
-					readyMD=right_hand(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (mdl, display);
-					g_free(display);   
-					gtk_widget_queue_draw(GTK_WIDGET(mdl));
-				}
-					
-			}
-			if(solMI){
-				if(!readyMI){
-					readyMI=left_hand(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (mil, display);
-					g_free(display);   
-					gtk_widget_queue_draw(GTK_WIDGET(mil));
-				}
-					
-			}
-			if(solAP){
-				if(!readyAP){
-					readyAP=pledge_alg(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (apl, display);
-					g_free(display);   
-					gtk_widget_queue_draw(GTK_WIDGET(apl));
-				}
-					
-			}
-			if(solAT){
-				if(!readyAT){
-					readyAT=tremaux_alg(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (atl, display);
-					g_free(display);   
-					gtk_widget_queue_draw(GTK_WIDGET(atl));
-				}
-					
-			}
-			/*if(solAF){
-				if(!readyAF){
-					readyAF=FATTHA(2*BaseF+1,2*BaseC+1,&ArPant);
-					gchar *display;
-					display = g_strdup_printf("%d", casillas);
-					gtk_label_set_text (afl, display);
-					g_free(display);  
-					gtk_widget_queue_draw(GTK_WIDGET(afl)); 
-				}
-			}*/
-			
-			if(inScreen(raton.i,raton.j)||inScreen(mano_der.i,mano_der.j)||inScreen(mano_izq.i,mano_izq.j)||inScreen(pledge.i,pledge.j)||inScreen(tremaux.i,tremaux.j)){
-				do_drawing();
-				gtk_widget_queue_draw(GTK_WIDGET(DrawArea));
-			}
-			
-			casillas++;
-			g_timeout_add(15,NULL,NULL);
-			while(!RunSol){
-				gtk_main_iteration ();
-			}
-		}
-		SolReady=0;
+
+gboolean cicloSolucion(void* data)
+{
+	if(!RunSol){
+		gchar *display;
+		display = g_strdup_printf("%d", ttlRA);
+		gtk_label_set_text (ral, display);  
+		gtk_widget_queue_draw(GTK_WIDGET(ral));
+		display = g_strdup_printf("%d", ttlMD);
+		gtk_label_set_text (mdl, display);
+		gtk_widget_queue_draw(GTK_WIDGET(mdl));
+		display = g_strdup_printf("%d", ttlMI);
+		gtk_label_set_text (mil, display);   
+		gtk_widget_queue_draw(GTK_WIDGET(mil));
+		display = g_strdup_printf("%d", ttlAP);
+		gtk_label_set_text (apl, display);  
+		gtk_widget_queue_draw(GTK_WIDGET(apl));
+		display = g_strdup_printf("%d", ttlAT);
+		gtk_label_set_text (atl, display); 
+		gtk_widget_queue_draw(GTK_WIDGET(atl));
+		/*display = g_strdup_printf("%d", ttlAF);
+		gtk_label_set_text (afl, display);
+		gtk_widget_queue_draw(GTK_WIDGET(afl));*/
+		g_free(display); 
+		
+		do_drawing();
+		gtk_widget_queue_draw(GTK_WIDGET(DrawArea));
+		return FALSE;
 	}
+	return TRUE;
+}
+
+void *correrSoluciones(void *k){
+	while(thrdon){
+		if(MazeOn&&correrHilo){
+			restaurMazeMat();
+			RunSol=1;
+			readyRA=0;
+			readyMD=0;
+			readyMI=0;
+			readyAP=0;
+			readyAT=0;
+			readyAF=0;
+			ttlRA=0;
+			ttlMD=0;
+			ttlMI=0;
+			ttlAP=0;
+			ttlAT=0;
+			ttlAF=0;
+			SolReady=0;
+			setij();
+			while(!SolReady){
+				SolReady=1;
+				if(solRA){
+					if(!readyRA){
+						readyRA=random_mouse(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlRA++;
+						SolReady=0;
+					}
+						
+				}
+				if(solMD){
+					if(!readyMD){
+						readyMD=right_hand(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlMD++;
+						SolReady=0;
+					}
+						
+				}
+				if(solMI){
+					if(!readyMI){
+						readyMI=left_hand(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlMI++;
+						SolReady=0;
+					}
+						
+				}
+				if(solAP){
+					if(!readyAP){
+						readyAP=pledge_alg(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlAP++;
+						SolReady=0;
+					}
+						
+				}
+				if(solAT){
+					if(!readyAT){
+						readyAT=tremaux_alg(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlAT++;
+						SolReady=0;
+					}
+						
+				}
+				/*if(solAF){
+					if(!readyAF){
+						readyAF=FATTHA(2*BaseF+1,2*BaseC+1,&ArPant);
+						ttlAF++;
+					}
+				}*/
+			}
+			RunSol=0;
+			SolReady=0;
+		}
+	}
+	return NULL;
 }
 
 //------------------------------------------------------------------
