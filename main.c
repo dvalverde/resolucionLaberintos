@@ -383,13 +383,13 @@ void setentrys(int m, int n,int ar[][n]){
         ej=rand()% n;
         sj=rand()% n;
     }
-    int pos[4]={0,ei,m-1,si};
-    int alt[4]={ej,n-1,sj,0};
-    p=rand()%4;
+    int pos[3]={ei,m-1,si};
+    int alt[3]={n-1,sj,0};
+    p=rand()%3;
     ei=pos[p];
     ej=alt[p];
     while (ig){
-        p=rand()%4;
+        p=rand()%3;
         si=pos[p];
         sj=alt[p];
         if(ei*n+ej!=si*n+sj)
@@ -460,6 +460,7 @@ void generate_maze(){
                     else if(ex==Entry)
                         E=n;
                 }
+                
             }else{
                 if (act&4){
                     ArPant[n]=1;
@@ -1814,7 +1815,12 @@ static void do_segdrawing(cairo_t *cr,int x, int y,int w, int h,int m,int n,int 
 				cairo_set_source_rgb(cr, 0, 0, 0);
 				cairo_rectangle(cr, 0, 0, 12, 12);
 				cairo_fill(cr); 
-			} 
+			}
+			else if((y+i==ini_i&&x+j==ini_j)||(y+i==ext_i&&x+j==ext_j)){
+				cairo_set_source_rgb(cr, 0.5, 0.5, 0.5);
+				cairo_rectangle(cr, 0, 0, 12, 12);
+				cairo_fill(cr); 
+			}
 			else if(mat[y+i][x+j]!=1){//||!(y+i==ext_i&&x+j==ext_j)||!(y+i==ini_i&&x+j==ini_j)
 				if(solRA){
 					cairo_set_source_rgb(cr, raton.r, raton.g, raton.b);
